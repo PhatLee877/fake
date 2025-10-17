@@ -1,0 +1,91 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local workspace = game:GetService("Workspace")
+
+local plotsFolder = workspace:WaitForChild("Plots")
+
+-- ⚙️ Hàm tìm base của chính người chơi
+local function FindMyBase()
+	if not plotsFolder then return nil end
+	for _, plot in ipairs(plotsFolder:GetChildren()) do
+		local sign = plot:FindFirstChild("PlotSign")
+		if sign and sign:FindFirstChild("YourBase") then
+			local yourBase = sign.YourBase
+			if yourBase.Enabled == true then
+				return plot
+			end
+		end
+	end
+	return nil
+end
+
+-- ⚙️ Dữ liệu pet
+local podiumData = {
+	[1] = {Name = "Strawberry Elephant", Speed = "350M/s", Rarity = "OG"},
+	[2] = {Name = "Dragon Cannelloni", Speed = "250M/s", Rarity = "Secret"},
+	[3] = {Name = "Spaghetti Tualetti", Speed = "60M/s", Rarity = "Secret"},
+	[4] = {Name = "Garama and Madundung", Speed = "50M/s", Rarity = "Secret"},
+	[5] = {Name = "Ketchuru and Musturu", Speed = "42.5M/s", Rarity = "Secret"},
+	[6] = {Name = "Ketupat Kepat", Speed = "35M/s", Rarity = "Secret"},
+	[7] = {Name = "Spooky and Pumpky", Speed = "80M/s", Rarity = "Secret"},
+}
+
+-- ⚙️ Hàm trộn ngẫu nhiên thứ tự
+local function shuffle(tbl)
+	local shuffled = {}
+	for i, v in ipairs(tbl) do shuffled[i] = v end
+	for i = #shuffled, 2, -1 do
+		local j = math.random(i)
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	end
+	return shuffled
+end
+
+-- ⚙️ Vòng lặp chính
+task.spawn(function()
+	while task.wait(0.1) do
+		local myBase = FindMyBase()
+		if not myBase then continue end
+
+		local podiums = myBase:FindFirstChild("AnimalPodiums")
+		if podiums then
+			for i = 1, 7 do
+				local podium = podiums:FindFirstChild(tostring(i))
+				if podium and podium:FindFirstChild("Base") then
+					local overhead = podium.Base.Spawn.Attachment:FindFirstChild("AnimalOverhead")
+					if overhead then
+						local data = podiumData[i]
+						local gen = overhead:FindFirstChild("Generation")
+						local display = overhead:FindFirstChild("DisplayName")
+						local rarity = overhead:FindFirstChild("Rarity")
+
+						if gen and gen:IsA("TextLabel") then
+							gen.Text = data.Speed
+						end
+						if display and display:IsA("TextLabel") then
+							display.Text = data.Name
+						end
+						if rarity and rarity:IsA("TextLabel") then
+							rarity.Text = data.Rarity
+						end
+					end
+				end
+			end
+		end
+
+		-- ✨ Sửa tên model ngẫu nhiên trong base
+		local allModels = myBase:GetChildren()
+		local shuffledPets = shuffle(podiumData)
+		local count = 0
+
+		for _, obj in ipairs(allModels) do
+			if obj:IsA("Model") and obj.Name ~= "FriendPanel" then
+				obj.Name = shuffledPets[math.random(1, #shuffledPets)].Name
+				count += 1
+				if count >= 7 then
+					break
+				end
+			end
+		end
+	end
+end)
