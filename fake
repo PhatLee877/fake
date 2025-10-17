@@ -41,7 +41,7 @@ local function shuffle(tbl)
 	return shuffled
 end
 
--- ⚙️ Vòng lặp chính
+-- ⚙️ Vòng lặp chính chạy mỗi 0.1s
 task.spawn(function()
 	while task.wait(0.1) do
 		local myBase = FindMyBase()
@@ -51,8 +51,9 @@ task.spawn(function()
 		if podiums then
 			for i = 1, 7 do
 				local podium = podiums:FindFirstChild(tostring(i))
-				if podium and podium:FindFirstChild("Base") then
-					local overhead = podium.Base.Spawn.Attachment:FindFirstChild("AnimalOverhead")
+				if podium and podium:FindFirstChild("Base") and podium.Base:FindFirstChild("Spawn") then
+					local spawn = podium.Base.Spawn
+					local overhead = spawn:FindFirstChild("Attachment") and spawn.Attachment:FindFirstChild("AnimalOverhead")
 					if overhead then
 						local data = podiumData[i]
 						local gen = overhead:FindFirstChild("Generation")
@@ -74,17 +75,20 @@ task.spawn(function()
 		end
 
 		-- ✨ Sửa tên model ngẫu nhiên trong base
-		local allModels = myBase:GetChildren()
-		local shuffledPets = shuffle(podiumData)
-		local count = 0
-
-		for _, obj in ipairs(allModels) do
+		local allModels = {}
+		for _, obj in ipairs(myBase:GetChildren()) do
 			if obj:IsA("Model") and obj.Name ~= "FriendPanel" then
+				table.insert(allModels, obj)
+			end
+		end
+
+		if #allModels > 0 then
+			local shuffledPets = shuffle(podiumData)
+			local count = 0
+			for _, obj in ipairs(allModels) do
 				obj.Name = shuffledPets[math.random(1, #shuffledPets)].Name
 				count += 1
-				if count >= 7 then
-					break
-				end
+				if count >= 7 then break end
 			end
 		end
 	end
